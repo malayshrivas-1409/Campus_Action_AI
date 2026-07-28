@@ -65,3 +65,4 @@ Thumbs.db
 *.key
 secrets/
 .groq_key
+*.kiro

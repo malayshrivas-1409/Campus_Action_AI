@@ -15,6 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "types": ["vite/client"],
 
     /* Linting */
     "strict": true,
@@ -33,6 +34,6 @@
       "@store/*": ["src/store/*"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "vite-env.d.ts"],
   "exclude": ["dist", "node_modules"]
 }
