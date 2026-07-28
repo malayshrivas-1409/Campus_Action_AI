@@ -1,7 +1,8 @@
 """Document and chunk models."""
 
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Index, BIGINT, Text, Boolean
-from sqlalchemy.dialects.postgresql import UUID, JSONB, Vector
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from pgvector.sqlalchemy import Vector
 from datetime import datetime
 import uuid
 from app.database import Base
@@ -64,7 +65,7 @@ class DocumentChunk(Base):
     page_number = Column(Integer, nullable=True)
     section = Column(String(255), nullable=True, index=True)
     embedding = Column(Vector(384), nullable=True)  # BGE embedding dimension
-    metadata = Column(JSONB, default={}, nullable=False)  # {department: [CSE, IT], batch: 2027, ...}
+    chunk_metadata = Column(JSONB, default={}, nullable=False)  # {department: [CSE, IT], batch: 2027, ...}
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     __table_args__ = (
