@@ -18,7 +18,7 @@ from app.services.llm import get_llm_service
 from app.logger import logger
 
 
-router = APIRouter(prefix="/rag", tags=["RAG"])
+router = APIRouter(prefix="/api/v1/rag", tags=["RAG"])
 
 
 def get_rag_service() -> RAGService:

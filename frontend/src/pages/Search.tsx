@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import { searchAPI } from '@/services/api';
 
 interface SearchResult {
   chunk_id: string;
@@ -45,26 +46,11 @@ export default function Search() {
 
     setIsLoading(true);
     try {
-      const endpoint = searchType === 'vector' ? '/search/vector' : '/search/keyword';
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          query: query,
-          limit: 20,
-          threshold: 0.5,
-        }),
-      });
+      const response = searchType === 'vector' 
+        ? await searchAPI.vectorSearch(query, 20, 0.5)
+        : await searchAPI.keywordSearch(query, 20);
 
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
-      const data = await response.json();
-      setResults(data.results || []);
+      setResults(response.data.results || []);
     } catch (err: any) {
       setError(err.message || 'Failed to search');
     } finally {

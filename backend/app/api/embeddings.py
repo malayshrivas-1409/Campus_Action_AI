@@ -11,7 +11,7 @@ from app.services.embedding import get_embedding_service
 from app.logger import logger
 
 
-router = APIRouter(prefix="/embeddings", tags=["embeddings"])
+router = APIRouter(prefix="/api/v1/embeddings", tags=["embeddings"])
 
 
 @router.post("/generate-all")

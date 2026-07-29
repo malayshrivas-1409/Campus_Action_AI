@@ -19,7 +19,7 @@ from app.services.document import DocumentService
 from app.logger import logger
 
 
-router = APIRouter(prefix="/documents", tags=["documents"])
+router = APIRouter(prefix="/api/v1/documents", tags=["documents"])
 document_service = DocumentService()
 
 

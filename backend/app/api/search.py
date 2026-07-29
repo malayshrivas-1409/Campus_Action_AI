@@ -21,7 +21,7 @@ from app.services.embedding import get_embedding_service
 from app.logger import logger
 
 
-router = APIRouter(prefix="/search", tags=["search"])
+router = APIRouter(prefix="/api/v1/search", tags=["search"])
 
 
 @router.get("/info", response_model=EmbeddingInfoResponse)

@@ -53,7 +53,7 @@ export const documentAPI = {
     formData.append('title', title);
     formData.append('document_type', documentType);
     
-    return api.post('/documents/upload', formData, {
+    return api.post('/api/v1/documents/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -68,14 +68,47 @@ export const documentAPI = {
     if (documentType) {
       params.append('document_type', documentType);
     }
-    return api.get(`/documents?${params}`);
+    return api.get(`/api/v1/documents?${params}`);
   },
   
   get: (documentId: string) =>
-    api.get(`/documents/${documentId}`),
+    api.get(`/api/v1/documents/${documentId}`),
   
   delete: (documentId: string) =>
-    api.delete(`/documents/${documentId}`),
+    api.delete(`/api/v1/documents/${documentId}`),
+};
+
+// Search APIs
+export const searchAPI = {
+  vectorSearch: (query: string, limit: number = 10, threshold: number = 0.5) =>
+    api.post('/api/v1/search/vector', { query, limit, threshold }),
+  
+  keywordSearch: (query: string, limit: number = 10) =>
+    api.post('/api/v1/search/keyword', { query, limit }),
+  
+  getInfo: () =>
+    api.get('/api/v1/search/info'),
+};
+
+// Embeddings APIs
+export const embeddingsAPI = {
+  generateAll: () =>
+    api.post('/api/v1/embeddings/generate-all'),
+  
+  generateVersion: (versionId: string) =>
+    api.post(`/api/v1/embeddings/generate-version/${versionId}`),
+};
+
+// RAG APIs
+export const ragAPI = {
+  retrieve: (query: string, topK: number = 10, vectorWeight: number = 0.7, keywordWeight: number = 0.3) =>
+    api.post('/api/v1/rag/retrieve', { query, top_k: topK, vector_weight: vectorWeight, keyword_weight: keywordWeight }),
+  
+  query: (query: string, topK: number = 10, vectorWeight: number = 0.7, keywordWeight: number = 0.3) =>
+    api.post('/api/v1/rag/query', { query, top_k: topK, vector_weight: vectorWeight, keyword_weight: keywordWeight }),
+  
+  status: () =>
+    api.get('/api/v1/rag/status'),
 };
 
 export default api;
