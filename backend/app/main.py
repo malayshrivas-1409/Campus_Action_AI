@@ -34,12 +34,8 @@ async def startup():
     await init_db()
     logger.info("Database initialized")
     
-    # Initialize embedding service
-    try:
-        embedding_service = get_embedding_service()
-        logger.info(f"Embedding service initialized: {embedding_service.model_name}")
-    except Exception as e:
-        logger.warning(f"Could not initialize embedding service: {e}")
+    # Don't initialize embedding service on startup - it's lazy loaded on first use
+    logger.info("Embedding service will be loaded on first search request")
 
 
 @app.on_event("shutdown")
