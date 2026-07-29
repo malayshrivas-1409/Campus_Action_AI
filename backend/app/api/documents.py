@@ -6,7 +6,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
+from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.document import (
@@ -29,7 +29,7 @@ async def upload_document(
     document_type: Annotated[str, Form()],
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """
     Upload a document.
@@ -81,7 +81,7 @@ async def list_documents(
     limit: int = 20,
     document_type: Optional[str] = None,
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """
     List all documents with pagination.
@@ -117,7 +117,7 @@ async def list_documents(
 async def get_document(
     document_id: str,
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Get document details by ID."""
     try:
@@ -145,7 +145,7 @@ async def get_document(
 async def delete_document(
     document_id: str,
     current_user: User = Depends(get_current_user),
-    session: AsyncSession = Depends(get_session),
+    session: AsyncSession = Depends(get_db),
 ):
     """Delete a document (soft delete)."""
     try:
