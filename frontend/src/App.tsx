@@ -5,6 +5,7 @@ import Signup from '@/pages/Signup'
 import Dashboard from '@/pages/Dashboard'
 import DocumentUpload from '@/pages/DocumentUpload'
 import DocumentList from '@/pages/DocumentList'
+import Search from '@/pages/Search'
 import { useAuthStore } from '@/store/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,14 @@ function App() {
           element={
             <PrivateRoute>
               <DocumentUpload />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <PrivateRoute>
+              <Search />
             </PrivateRoute>
           }
         />

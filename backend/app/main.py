@@ -5,13 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db, close_db
 from app.logger import logger
-from app.api import health, auth, students, documents
+from app.api import health, auth, students, documents, search, embeddings
+from app.services.embedding import get_embedding_service
 
 # Create FastAPI application
 app = FastAPI(
     title=settings.APP_NAME,
     description="Intelligent Notice Management & Eligibility Engine",
-    version="0.2.0",
+    version="0.3.0",
     debug=settings.DEBUG,
 )
 
@@ -32,6 +33,13 @@ async def startup():
     logger.info("Starting Campus Action AI API")
     await init_db()
     logger.info("Database initialized")
+    
+    # Initialize embedding service
+    try:
+        embedding_service = get_embedding_service()
+        logger.info(f"Embedding service initialized: {embedding_service.model_name}")
+    except Exception as e:
+        logger.warning(f"Could not initialize embedding service: {e}")
 
 
 @app.on_event("shutdown")
@@ -47,6 +55,8 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(students.router)
 app.include_router(documents.router)
+app.include_router(search.router)
+app.include_router(embeddings.router)
 
 
 # Root endpoint
