@@ -45,4 +45,38 @@ export const studentAPI = {
     api.get(`/api/v1/students/${studentId}`),
 };
 
+// Document APIs
+export const documentAPI = {
+  upload: (file: File, title: string, documentType: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', title);
+    formData.append('document_type', documentType);
+    
+    return api.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  
+  list: (skip: number = 0, limit: number = 20, documentType?: string) => {
+    const params = new URLSearchParams({
+      skip: skip.toString(),
+      limit: limit.toString(),
+    });
+    if (documentType) {
+      params.append('document_type', documentType);
+    }
+    return api.get(`/documents?${params}`);
+  },
+  
+  get: (documentId: string) =>
+    api.get(`/documents/${documentId}`),
+  
+  delete: (documentId: string) =>
+    api.delete(`/documents/${documentId}`),
+};
+
 export default api;
+
