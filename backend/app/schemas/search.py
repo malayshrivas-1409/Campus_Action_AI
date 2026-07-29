@@ -50,3 +50,6 @@ class EmbeddingInfoResponse(BaseModel):
     model_name: str
     embedding_dimension: int
     service_status: str
+    
+    class Config:
+        protected_namespaces = ()
