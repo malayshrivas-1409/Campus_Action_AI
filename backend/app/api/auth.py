@@ -17,7 +17,7 @@ from app.schemas.auth import (
 from app.services.auth import AuthService
 from app.config import settings
 from app.logger import logger
-from app.dependencies import get_token
+from app.dependencies import get_token, get_current_user
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
@@ -136,9 +136,8 @@ async def login(
 
 
 @router.get("/me", response_model=CurrentUserResponse)
-async def get_current_user(
-    token: str = Depends(get_token),
-    session: AsyncSession = Depends(get_db)
+async def get_me(
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get current logged-in user.
@@ -146,35 +145,12 @@ async def get_current_user(
     Requires Authorization header: Bearer <token>
     """
     try:
-        # Verify token
-        payload = await AuthService.verify_token(token)
-        if not payload:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token"
-            )
-
-        # Get user
-        user = await AuthService.get_user_by_id(session, user_id)
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
-
         return CurrentUserResponse(
-            id=str(user.id),
-            email=user.email,
-            name=user.name,
-            role=user.role.value,
-            is_active=user.is_active
+            id=str(current_user.id),
+            email=current_user.email,
+            name=current_user.name,
+            role=current_user.role.value,
+            is_active=current_user.is_active
         )
 
     except HTTPException:

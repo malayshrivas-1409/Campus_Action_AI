@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
 import Dashboard from '@/pages/Dashboard'
+import DocumentUpload from '@/pages/DocumentUpload'
+import DocumentList from '@/pages/DocumentList'
 import { useAuthStore } from '@/store/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -21,6 +23,22 @@ function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/documents"
+          element={
+            <PrivateRoute>
+              <DocumentList />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/documents/upload"
+          element={
+            <PrivateRoute>
+              <DocumentUpload />
             </PrivateRoute>
           }
         />
