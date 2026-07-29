@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import init_db, close_db
 from app.logger import logger
-from app.api import health, auth, students, documents, search, embeddings
+from app.api import health, auth, students, documents, search, embeddings, rag
 from app.services.embedding import get_embedding_service
 
 # Create FastAPI application
@@ -53,6 +53,7 @@ app.include_router(students.router)
 app.include_router(documents.router)
 app.include_router(search.router)
 app.include_router(embeddings.router)
+app.include_router(rag.router)
 
 
 # Root endpoint
