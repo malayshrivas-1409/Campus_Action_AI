@@ -1,11 +1,13 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import Navbar from '@/components/Navbar'
 import Login from '@/pages/Login'
 import Signup from '@/pages/Signup'
 import Dashboard from '@/pages/Dashboard'
 import DocumentUpload from '@/pages/DocumentUpload'
 import DocumentList from '@/pages/DocumentList'
 import Search from '@/pages/Search'
+import Chat from '@/pages/Chat'
 import { useAuthStore } from '@/store/authStore'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -16,7 +18,9 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Router>
-      <Routes>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route
@@ -51,8 +55,17 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/chat"
+          element={
+            <PrivateRoute>
+              <Chat />
+            </PrivateRoute>
+          }
+        />
         <Route path="/" element={<Navigate to="/dashboard" />} />
-      </Routes>
+        </Routes>
+      </div>
     </Router>
   )
 }
