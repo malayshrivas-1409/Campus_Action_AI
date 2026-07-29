@@ -8,6 +8,7 @@ from app.models.student_action import StudentAction
 from app.models.notification import Notification
 from app.models.extraction_result import ExtractionResult
 from app.models.audit_log import AuditLog
+from app.models.conversation import Conversation, ConversationMessage
 
 __all__ = [
     "User",
@@ -20,4 +21,6 @@ __all__ = [
     "Notification",
     "ExtractionResult",
     "AuditLog",
+    "Conversation",
+    "ConversationMessage",
 ]

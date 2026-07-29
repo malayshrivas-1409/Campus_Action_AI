@@ -111,5 +111,26 @@ export const ragAPI = {
     api.get('/api/v1/rag/status'),
 };
 
+// Chat APIs
+export const chatAPI = {
+  sendMessage: (conversationId: string | null, message: string, topK: number = 10, vectorWeight: number = 0.7, keywordWeight: number = 0.3) =>
+    api.post('/api/v1/chat/message', { 
+      conversation_id: conversationId, 
+      message, 
+      top_k: topK, 
+      vector_weight: vectorWeight, 
+      keyword_weight: keywordWeight 
+    }),
+  
+  listConversations: () =>
+    api.get('/api/v1/chat/conversations'),
+  
+  getConversation: (conversationId: string) =>
+    api.get(`/api/v1/chat/conversations/${conversationId}`),
+  
+  deleteConversation: (conversationId: string) =>
+    api.delete(`/api/v1/chat/conversations/${conversationId}`),
+};
+
 export default api;
 
