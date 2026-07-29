@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 
@@ -13,19 +13,39 @@ export default function Dashboard() {
     }
 
     // Fetch user and profile data
-    getMe();
-    getStudentProfile().catch(() => {
-      // Profile might not exist yet
-    });
+    const fetchData = async () => {
+      try {
+        await getMe();
+        await getStudentProfile().catch(() => {
+          // Profile might not exist yet
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
   }, [token, navigate, getMe, getStudentProfile]);
 
-  if (!user) {
+  // Show loading but also display dashboard after 2 seconds even if user not loaded
+  // This prevents infinite loading state
+  const [showTimeout, setShowTimeout] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setShowTimeout(true), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!user && !showTimeout) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
+
+  // Fallback user object if not loaded
+  const displayUser = user || { name: 'User', email: 'Loading...', role: 'student', is_active: true, id: '' };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,7 +54,7 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">Campus Action AI</h1>
           <div className="flex items-center space-x-4">
-            <span className="text-gray-700">{user.name}</span>
+            <span className="text-gray-700">{displayUser.name}</span>
             <button
               onClick={logout}
               className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
@@ -53,14 +73,14 @@ export default function Dashboard() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Account Info</h2>
             <div className="space-y-2">
               <p className="text-gray-600">
-                <span className="font-medium">Name:</span> {user.name}
+                <span className="font-medium">Name:</span> {displayUser.name}
               </p>
               <p className="text-gray-600">
-                <span className="font-medium">Email:</span> {user.email}
+                <span className="font-medium">Email:</span> {displayUser.email}
               </p>
               <p className="text-gray-600">
                 <span className="font-medium">Role:</span>{' '}
-                <span className="capitalize">{user.role}</span>
+                <span className="capitalize">{displayUser.role}</span>
               </p>
             </div>
           </div>
