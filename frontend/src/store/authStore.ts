@@ -89,8 +89,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
   getMe: async () => {
     try {
       const response = await authAPI.getMe();
-      set({ user: response.data });
+      const userData = {
+        id: response.data.id,
+        email: response.data.email,
+        name: response.data.name,
+        role: response.data.role,
+        is_active: response.data.is_active,
+      };
+      set({ user: userData });
     } catch (error: any) {
+      console.error('Failed to get user:', error);
       const message = error.response?.data?.detail || 'Failed to fetch user';
       set({ error: message });
     }

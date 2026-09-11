@@ -6,10 +6,14 @@ from sqlalchemy import text
 from app.config import settings
 from app.logger import logger
 
-# Convert PostgreSQL URL to async format
-async_database_url = settings.DATABASE_URL.replace(
-    "postgresql://", "postgresql+asyncpg://"
-)
+# Convert PostgreSQL URL to async format if needed
+async_database_url = settings.DATABASE_URL
+if "postgresql://" in async_database_url and "asyncpg" not in async_database_url:
+    async_database_url = async_database_url.replace(
+        "postgresql://", "postgresql+asyncpg://"
+    )
+
+logger.info(f"Using database URL: {async_database_url.split('@')[0]}@...")  # Log without password
 
 # Create async engine
 engine = create_async_engine(
