@@ -32,6 +32,11 @@ class ChunkEmbedderService:
             Result dictionary with stats
         """
         try:
+            # Get embedding service
+            service = get_embedding_service()
+            expected_dim = service.get_embedding_dimension()
+            logger.info(f"Expected embedding dimension: {expected_dim}")
+            
             # Get all chunks for this version that don't have embeddings
             query = (
                 select(DocumentChunk)
@@ -46,6 +51,7 @@ class ChunkEmbedderService:
             chunks = result.scalars().all()
 
             if not chunks:
+                logger.info(f"No chunks to embed for version {version_id}")
                 return {
                     "success": True,
                     "chunks_processed": 0,
@@ -53,37 +59,79 @@ class ChunkEmbedderService:
                     "error": None,
                 }
 
-            logger.info(f"Generating embeddings for {len(chunks)} chunks in version {version_id}")
-
-            # Get embedding service
-            service = get_embedding_service()
+            logger.info(f"🔄 Generating embeddings for {len(chunks)} chunks in version {version_id}")
 
             # Extract texts
             texts = [chunk.content for chunk in chunks]
 
+            # Validate texts
+            valid_chunks = []
+            invalid_count = 0
+            for chunk, text in zip(chunks, texts):
+                if text and len(text.strip()) > 2:
+                    valid_chunks.append((chunk, text))
+                else:
+                    invalid_count += 1
+                    logger.warning(f"Skipping chunk {chunk.chunk_index}: empty or too short")
+            
+            if not valid_chunks:
+                logger.error(f"No valid chunks to embed for version {version_id}")
+                return {
+                    "success": False,
+                    "chunks_processed": 0,
+                    "chunks_skipped": len(chunks),
+                    "error": "No valid chunks to embed",
+                }
+
             # Generate embeddings in batches
-            embeddings = service.embed_texts(texts, batch_size=batch_size)
+            logger.info(f"Encoding {len(valid_chunks)} valid chunks...")
+            valid_texts = [text for _, text in valid_chunks]
+            embeddings = service.embed_texts(valid_texts, batch_size=batch_size)
+
+            if len(embeddings) != len(valid_chunks):
+                logger.error(f"Embedding count mismatch: got {len(embeddings)}, expected {len(valid_chunks)}")
+                return {
+                    "success": False,
+                    "chunks_processed": 0,
+                    "chunks_skipped": len(chunks),
+                    "error": "Embedding generation failed",
+                }
+            
+            # Validate embedding dimensions
+            if embeddings:
+                first_dim = len(embeddings[0])
+                logger.info(f"Generated embedding dimension: {first_dim}")
+                if first_dim != expected_dim:
+                    logger.error(f"❌ Dimension mismatch! Generated: {first_dim}, Expected: {expected_dim}")
+                    return {
+                        "success": False,
+                        "chunks_processed": 0,
+                        "chunks_skipped": len(chunks),
+                        "error": f"Embedding dimension mismatch: {first_dim} vs {expected_dim}",
+                    }
 
             # Store embeddings
-            for chunk, embedding in zip(chunks, embeddings):
+            logger.info(f"Storing {len(embeddings)} embeddings...")
+            for chunk, embedding in zip([c for c, _ in valid_chunks], embeddings):
                 chunk.embedding = embedding
 
             # Commit changes
             await session.flush()
             await session.commit()
 
-            logger.info(f"Successfully generated {len(chunks)} embeddings for version {version_id}")
+            logger.info(f"✅ Successfully generated {len(embeddings)} embeddings (dim={expected_dim}) for version {version_id}")
 
             return {
                 "success": True,
-                "chunks_processed": len(chunks),
-                "chunks_skipped": 0,
+                "chunks_processed": len(embeddings),
+                "chunks_skipped": invalid_count,
+                "embedding_dimension": expected_dim,
                 "error": None,
             }
 
         except Exception as e:
             await session.rollback()
-            logger.error(f"Error embedding chunks: {str(e)}")
+            logger.error(f"❌ Error embedding chunks: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "chunks_processed": 0,

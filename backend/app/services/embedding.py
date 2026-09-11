@@ -51,6 +51,10 @@ class EmbeddingService:
         if not self.model:
             raise RuntimeError("Model not loaded")
 
+        if not text or len(text.strip()) < 2:
+            # Return zero vector for empty text
+            return [0.0] * self.get_embedding_dimension()
+
         try:
             # Generate embedding
             embedding = self.model.encode(text, convert_to_numpy=True)
@@ -60,7 +64,7 @@ class EmbeddingService:
             
             return embedding_list
         except Exception as e:
-            logger.error(f"Error generating embedding: {e}")
+            logger.error(f"Error generating embedding for text '{text[:50]}...': {e}")
             raise
 
     def embed_texts(self, texts: List[str], batch_size: int = 32) -> List[List[float]]:

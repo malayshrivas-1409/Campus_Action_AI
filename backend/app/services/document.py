@@ -185,6 +185,7 @@ class DocumentService:
         skip: int = 0,
         limit: int = 20,
         document_type: Optional[str] = None,
+        uploaded_by_id: Optional[str] = None,
     ) -> list:
         """
         Get documents with pagination.
@@ -194,6 +195,7 @@ class DocumentService:
             skip: Number of records to skip
             limit: Maximum records to return
             document_type: Filter by type
+            uploaded_by_id: Filter by user who uploaded (for user isolation)
 
         Returns:
             List of documents
@@ -203,10 +205,69 @@ class DocumentService:
         if document_type:
             query = query.where(Document.document_type == document_type)
         
+        # IMPORTANT: Filter by user for isolation
+        if uploaded_by_id:
+            query = query.where(Document.uploaded_by == uploaded_by_id)
+        
         query = query.order_by(desc(Document.uploaded_at)).offset(skip).limit(limit)
         
         result = await session.execute(query)
         return result.scalars().all()
+
+    async def get_document_chunks(
+        self,
+        session: AsyncSession,
+        document_id: str,
+    ) -> Optional[list]:
+        """
+        Get all chunks for a document (latest version).
+
+        Args:
+            session: Database session
+            document_id: Document ID
+
+        Returns:
+            List of chunks with content or None if document not found
+        """
+        try:
+            # Get latest version of document
+            result = await session.execute(
+                select(DocumentVersion)
+                .where(
+                    and_(
+                        DocumentVersion.document_id == document_id,
+                        DocumentVersion.is_latest == True,
+                    )
+                )
+                .order_by(desc(DocumentVersion.version_number))
+            )
+            
+            version = result.scalar_one_or_none()
+            if not version:
+                return None
+            
+            # Get all chunks for this version
+            chunks_result = await session.execute(
+                select(DocumentChunk)
+                .where(DocumentChunk.document_version_id == version.id)
+                .order_by(DocumentChunk.chunk_index)
+            )
+            
+            chunks = chunks_result.scalars().all()
+            
+            return [
+                {
+                    "chunk_index": chunk.chunk_index,
+                    "content": chunk.content,
+                    "page_number": chunk.page_number,
+                    "section": chunk.section,
+                }
+                for chunk in chunks
+            ]
+            
+        except Exception as e:
+            logger.error(f"Error retrieving document chunks: {e}", exc_info=True)
+            return None
 
     async def delete_document(
         self,
@@ -214,7 +275,7 @@ class DocumentService:
         document_id: str,
     ) -> bool:
         """
-        Soft delete a document.
+        Delete a document (hard delete).
 
         Args:
             session: Database session
@@ -223,17 +284,36 @@ class DocumentService:
         Returns:
             True if deleted, False if not found
         """
-        document = await self.get_document(session, document_id)
-        
-        if not document:
-            return False
-        
-        document.is_active = False
-        document.updated_at = datetime.utcnow()
-        
-        await session.flush()
-        logger.info(f"Deleted document {document_id}")
-        return True
+        try:
+            document = await self.get_document(session, document_id)
+            
+            if not document:
+                return False
+            
+            # Get file path before deleting
+            file_path = document.file_path
+            
+            # Delete document (cascade will delete versions and chunks)
+            await session.delete(document)
+            await session.flush()
+            await session.commit()
+            
+            # Delete file from disk
+            try:
+                if file_path and Path(file_path).exists():
+                    Path(file_path).unlink()
+                    logger.info(f"Deleted file from disk: {file_path}")
+            except Exception as e:
+                logger.warning(f"Could not delete file {file_path}: {e}")
+                # Don't fail the entire delete if file deletion fails
+            
+            logger.info(f"✅ Document deleted: {document_id}")
+            return True
+            
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"❌ Error deleting document: {e}", exc_info=True)
+            raise
 
     async def process_upload(
         self,
@@ -290,22 +370,55 @@ class DocumentService:
                     "chunks_count": 0,
                 }
             
+            if not chunks:
+                logger.warning(f"No chunks extracted from PDF: {filename}")
+                await session.commit()
+                return {
+                    "success": False,
+                    "document_id": str(document.id),
+                    "error": "No text content found in PDF",
+                    "chunks_count": 0,
+                }
+            
             # Store chunks
             chunks_count = await self.store_chunks(session, version.id, chunks)
             
             await session.commit()
+            
+            logger.info(f"Document uploaded: {len(chunks)} chunks stored")
+            
+            # Generate embeddings for chunks
+            logger.info(f"🔄 Generating embeddings for {chunks_count} chunks...")
+            from app.services.chunk_embedder import ChunkEmbedderService
+            embedding_result = await ChunkEmbedderService.embed_chunks_for_version(session, version.id)
+            
+            if not embedding_result["success"]:
+                # FAIL the upload - embeddings are critical for RAG
+                logger.error(f"❌ Embedding generation failed: {embedding_result['error']}")
+                await session.rollback()
+                return {
+                    "success": False,
+                    "document_id": str(document.id),
+                    "error": f"Embedding generation failed: {embedding_result['error']}",
+                    "chunks_count": chunks_count,
+                }
+            
+            embeddings_generated = embedding_result["chunks_processed"]
+            logger.info(f"✅ Generated embeddings for {embeddings_generated} chunks")
             
             return {
                 "success": True,
                 "document_id": str(document.id),
                 "version_id": str(version.id),
                 "chunks_count": chunks_count,
+                "embeddings_generated": embeddings_generated,
+                "embedding_status": "completed",
                 "error": None,
             }
             
         except Exception as e:
             await session.rollback()
-            logger.error(f"Error processing upload: {str(e)}")
+            logger.error(f"Error processing upload: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),

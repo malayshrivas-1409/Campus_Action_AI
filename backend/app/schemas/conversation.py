@@ -61,6 +61,7 @@ class ChatRequest(BaseModel):
     top_k: int = 10
     vector_weight: float = 0.7
     keyword_weight: float = 0.3
+    selected_document_ids: Optional[List[str]] = None  # If provided, filter to these documents
 
 
 class ChatResponse(BaseModel):

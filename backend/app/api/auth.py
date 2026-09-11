@@ -161,3 +161,114 @@ async def get_me(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error retrieving user"
         )
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Refresh authentication token.
+    
+    Takes the current token from Authorization header and returns a new one.
+    Requires Authorization header: Bearer <token>
+    """
+    try:
+        # Generate new JWT token
+        access_token_expires = timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+        access_token = AuthService.create_access_token(
+            data={"sub": str(current_user.id), "email": current_user.email},
+            expires_delta=access_token_expires
+        )
+
+        logger.info(f"Token refreshed for user: {current_user.email}")
+
+        return TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Token refresh error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error refreshing token"
+        )
+
+
+@router.put("/profile", response_model=CurrentUserResponse)
+async def update_profile(
+    name: str,
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Update current user profile.
+    
+    Requires Authorization header: Bearer <token>
+    """
+    try:
+        current_user.name = name
+        await session.commit()
+        await session.refresh(current_user)
+
+        logger.info(f"Profile updated for user: {current_user.email}")
+
+        return CurrentUserResponse(
+            id=str(current_user.id),
+            email=current_user.email,
+            name=current_user.name,
+            role=current_user.role.value,
+            is_active=current_user.is_active
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Profile update error: {e}")
+        await session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating profile"
+        )
+
+
+@router.get("/profile-status")
+async def get_profile_status(
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Check if user profile is complete.
+    
+    Returns profile completion status.
+    """
+    try:
+        from app.models.student import Student
+        
+        # Check if student profile exists
+        result = await session.execute(
+            select(Student).where(Student.user_id == current_user.id)
+        )
+        student = result.scalar_one_or_none()
+        
+        is_profile_complete = student is not None
+        
+        return {
+            "is_complete": is_profile_complete,
+            "user_id": str(current_user.id),
+            "email": current_user.email,
+            "name": current_user.name,
+        }
+        
+    except Exception as e:
+        logger.error(f"Profile status check error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error checking profile status"
+        )

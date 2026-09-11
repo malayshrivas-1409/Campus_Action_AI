@@ -79,13 +79,14 @@ async def vector_search(
                 dc.content,
                 dc.page_number,
                 dc.section,
-                (1 - (dc.embedding <=> :embedding::vector)) as similarity_score
+                (1 - (dc.embedding <=> CAST(:embedding AS vector))) as similarity_score
             FROM document_chunks dc
             JOIN document_versions dv ON dc.document_version_id = dv.id
             JOIN documents d ON dv.document_id = d.id
             WHERE d.is_active = true
             AND dv.is_latest = true
-            AND (1 - (dc.embedding <=> :embedding::vector)) > :threshold
+            AND d.uploaded_by = :user_id
+            AND (1 - (dc.embedding <=> CAST(:embedding AS vector))) > :threshold
             ORDER BY similarity_score DESC
             LIMIT :limit
         """)
@@ -94,6 +95,7 @@ async def vector_search(
             sql,
             {
                 "embedding": embedding_str,
+                "user_id": str(current_user.id),
                 "threshold": request.threshold,
                 "limit": request.limit,
             }
@@ -163,6 +165,7 @@ async def keyword_search(
             .where(
                 and_(
                     Document.is_active == True,
+                    Document.uploaded_by == current_user.id,  # IMPORTANT: Filter by current user
                     DocumentVersion.is_latest == True,
                     DocumentChunk.content.ilike(search_term),
                 )
