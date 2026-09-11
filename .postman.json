@@ -1,0 +1,221 @@
+{
+  "workspace_id": null,
+  "workspace_name": "Campus Action AI",
+  "collection_id": null,
+  "collection_name": "Campus Action AI API",
+  "environment_id": null,
+  "environment_name": "Local Development",
+  "base_url": "http://localhost:8000",
+  "api_version": "0.3.0",
+  "last_updated": "2024-01-01T00:00:00Z",
+  "import_instructions": "1. Open Postman\n2. Click Import (top-left)\n3. Upload Campus_Action_AI.postman_collection.json\n4. Upload Campus_Action_AI_Local.postman_environment.json\n5. Select 'Local Development' environment from dropdown\n6. Start backend: python -m uvicorn app.main:app --reload --port 8000\n7. Run requests from the collection",
+  "files": {
+    "collection": "Campus_Action_AI.postman_collection.json",
+    "environment": "Campus_Action_AI_Local.postman_environment.json",
+    "guide": "POSTMAN_GUIDE.md"
+  },
+  "endpoints": {
+    "health": {
+      "path": "/health",
+      "method": "GET",
+      "auth": "none",
+      "description": "API health check"
+    },
+    "root": {
+      "path": "/",
+      "method": "GET",
+      "auth": "none",
+      "description": "API information and version"
+    },
+    "auth_signup": {
+      "path": "/api/v1/auth/signup",
+      "method": "POST",
+      "auth": "none",
+      "description": "Register new user account"
+    },
+    "auth_login": {
+      "path": "/api/v1/auth/login",
+      "method": "POST",
+      "auth": "none",
+      "description": "Login and get access token"
+    },
+    "auth_me": {
+      "path": "/api/v1/auth/me",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Get current authenticated user"
+    },
+    "auth_refresh": {
+      "path": "/api/v1/auth/refresh",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Refresh access token"
+    },
+    "documents_upload": {
+      "path": "/api/v1/documents/upload",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Upload PDF document"
+    },
+    "documents_list": {
+      "path": "/api/v1/documents",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "List user's documents with pagination"
+    },
+    "documents_get": {
+      "path": "/api/v1/documents/{document_id}",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Get document details"
+    },
+    "documents_view": {
+      "path": "/api/v1/documents/{document_id}/view",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "View document chunks and content"
+    },
+    "documents_pdf": {
+      "path": "/api/v1/documents/{document_id}/pdf",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Download original PDF"
+    },
+    "documents_delete": {
+      "path": "/api/v1/documents/{document_id}",
+      "method": "DELETE",
+      "auth": "bearer_token",
+      "description": "Delete document"
+    },
+    "search_vector": {
+      "path": "/api/v1/search/vector",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Semantic vector search"
+    },
+    "search_keyword": {
+      "path": "/api/v1/search/keyword",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Keyword BM25 search"
+    },
+    "search_hybrid": {
+      "path": "/api/v1/search/hybrid",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Hybrid search (vector + keyword)"
+    },
+    "search_embedding_info": {
+      "path": "/api/v1/search/embedding-info",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Embedding service info"
+    },
+    "chat_send": {
+      "path": "/api/v1/chat/send",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Send message and get AI response"
+    },
+    "chat_conversations_list": {
+      "path": "/api/v1/chat/conversations",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "List conversations"
+    },
+    "chat_conversations_get": {
+      "path": "/api/v1/chat/conversations/{conversation_id}",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Get conversation"
+    },
+    "chat_conversations_delete": {
+      "path": "/api/v1/chat/conversations/{conversation_id}",
+      "method": "DELETE",
+      "auth": "bearer_token",
+      "description": "Delete conversation"
+    },
+    "rag_answer": {
+      "path": "/api/v1/rag/answer",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Answer question with RAG"
+    },
+    "students_profile_get": {
+      "path": "/api/v1/students/profile",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Get student profile"
+    },
+    "students_profile_update": {
+      "path": "/api/v1/students/profile",
+      "method": "PUT",
+      "auth": "bearer_token",
+      "description": "Update student profile"
+    },
+    "notifications_list": {
+      "path": "/api/v1/notifications",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "List notifications"
+    },
+    "notifications_get": {
+      "path": "/api/v1/notifications/{notification_id}",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Get notification"
+    },
+    "notifications_mark_read": {
+      "path": "/api/v1/notifications/{notification_id}",
+      "method": "PATCH",
+      "auth": "bearer_token",
+      "description": "Mark notification as read"
+    },
+    "notifications_delete": {
+      "path": "/api/v1/notifications/{notification_id}",
+      "method": "DELETE",
+      "auth": "bearer_token",
+      "description": "Delete notification"
+    },
+    "notifications_mark_all_read": {
+      "path": "/api/v1/notifications/mark-all-read",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Mark all notifications as read"
+    },
+    "actions_list": {
+      "path": "/api/v1/actions",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "List eligible actions"
+    },
+    "actions_get": {
+      "path": "/api/v1/actions/{action_id}",
+      "method": "GET",
+      "auth": "bearer_token",
+      "description": "Get action details"
+    },
+    "actions_check_eligibility": {
+      "path": "/api/v1/actions/{action_id}/check-eligibility",
+      "method": "POST",
+      "auth": "bearer_token",
+      "description": "Check action eligibility"
+    }
+  },
+  "test_flow": [
+    "auth_signup",
+    "auth_login",
+    "auth_me",
+    "students_profile_update",
+    "documents_upload",
+    "documents_list",
+    "search_vector",
+    "search_keyword",
+    "chat_send",
+    "chat_conversations_list",
+    "notifications_list",
+    "actions_list",
+    "chat_conversations_delete",
+    "documents_delete"
+  ]
+}
